@@ -1,9 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from typing import Literal, Optional
+from sqlalchemy.orm import Session
+from fastapi import Depends
+import sys
+sys.path.append(".")
+from database.db import get_db, Prediction
 import joblib
 import pandas as pd
-import numpy as np
+
 
 # Chargement du modèle et des features
 model = joblib.load("models/model.joblib")
@@ -22,7 +27,26 @@ class EmployeeInput(BaseModel):
     heure_supplementaires: Literal["Oui", "Non"] = Field(..., example="Non")
     satisfaction_employee_environnement: int = Field(..., ge=1, le=4, example=3)
     frequence_deplacement: Literal["Aucun", "Occasionnel", "Frequent"] = Field(..., example="Occasionnel")
-
+    genre: Literal["M", "F"] = Field("M", example="M")
+    statut_marital: Literal["Célibataire", "Marié(e)", "Divorcé(e)"] = Field("Célibataire", example="Célibataire")
+    departement: Literal["Consulting", "Finance", "Recherche & Développement", "Ressources Humaines", "Ventes"] = Field("Finance", example="Finance")
+    poste: Literal["Cadre Commercial", "Consultant", "Directeur Technique", "Manager", "Représentant Commercial", "Ressources Humaines", "Senior Manager", "Tech Lead"] = Field("Consultant", example="Consultant")
+    domaine_etude: Literal["Entrepreunariat", "Infra & Cloud", "Marketing", "Ressources Humaines", "Sciences", "Transformation Digitale"] = Field("Sciences", example="Sciences")
+    nombre_experiences_precedentes: int = Field(2, example=2)
+    annee_experience_totale: int = Field(10, example=10)
+    annees_dans_l_entreprise: int = Field(5, example=5)
+    annees_dans_le_poste_actuel: int = Field(3, example=3)
+    note_evaluation_precedente: float = Field(3.5, example=3.5)
+    satisfaction_employee_nature_travail: int = Field(3, ge=1, le=4, example=3)
+    satisfaction_employee_equipe: int = Field(3, ge=1, le=4, example=3)
+    satisfaction_employee_equilibre_pro_perso: int = Field(3, ge=1, le=4, example=3)
+    note_evaluation_actuelle: float = Field(3.5, example=3.5)
+    augmentation_salaire_precedente: float = Field(10.0, example=10.0)
+    nombre_participation_pee: int = Field(2, example=2)
+    nb_formations_suivies: int = Field(3, example=3)
+    distance_domicile_travail: float = Field(10.0, example=10.0)
+    niveau_education: int = Field(3, ge=1, le=5, example=3)
+    annees_depuis_la_derniere_promotion: int = Field(2, example=2)
 
     class Config:
         populate_by_name = True
@@ -34,7 +58,7 @@ class PredictionOutput(BaseModel):
     probabilite_depart: float
     
 def preprocess(data: EmployeeInput) -> pd.DataFrame:
-    d = data.dict()
+    d = data.dict(exclude_unset=False) 
 
     # Encodage ordinal
     freq_map = {"Aucun": 0, "Occasionnel": 1, "Frequent": 2}
@@ -74,19 +98,35 @@ def root():
 def health():
     return {"status": "ok"}
 
+
 @app.post("/predict", response_model=PredictionOutput)
-def predict(data: EmployeeInput):
+def predict(data: EmployeeInput, db: Session = Depends(get_db)):
     try:
-        input_df = pd.DataFrame([data.dict()])
-        input_df = input_df.reindex(columns=feature_names, fill_value=0)
-        
+        print(data.dict()) 
+        input_df = preprocess(data)
         prediction = model.predict(input_df)[0]
         proba = model.predict_proba(input_df)[0][1]
-        
+
+        # Enregistrer en BDD
+        log = Prediction(
+            age=data.age,
+            revenu_mensuel=data.revenu_mensuel,
+            departement=data.departement,
+            poste=data.poste,
+            heure_supplementaires=data.heure_supplementaires,
+            frequence_deplacement=data.frequence_deplacement,
+            prediction=int(prediction),
+            label="Risque de départ" if prediction == 1 else "Employé stable",
+            probabilite_depart=round(float(proba), 4)
+        )
+        db.add(log)
+        db.commit()
+
         return {
             "prediction": int(prediction),
-            "label": "Risque de départ" if prediction == 1 else "Employé stable",
-            "probabilite_depart": round(float(proba), 4)
+            "label": log.label,
+            "probabilite_depart": log.probabilite_depart
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
