@@ -9,6 +9,10 @@ from database.db import get_db, Prediction
 import joblib
 import pandas as pd
 
+from fastapi.security.api_key import APIKeyHeader
+from fastapi import Security
+import os
+from dotenv import load_dotenv
 
 # Chargement du modèle et des features
 model = joblib.load("models/model.joblib")
@@ -19,6 +23,17 @@ app = FastAPI(
     description="Prédit si un employé va quitter l'entreprise",
     version="1.0.0"
 )
+
+#authentification
+load_dotenv()
+
+API_KEY = os.getenv("API_KEY")
+api_key_header = APIKeyHeader(name="X-API-Key")
+
+def verify_api_key(key: str = Security(api_key_header)):
+    if key != API_KEY:
+        raise HTTPException(status_code=403, detail="Clé API invalide")
+    return key
 
 # Schéma des données d'entrée
 class EmployeeInput(BaseModel):
@@ -100,7 +115,7 @@ def health():
 
 
 @app.post("/predict", response_model=PredictionOutput)
-def predict(data: EmployeeInput, db: Session = Depends(get_db)):
+def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Security(verify_api_key)):
     try:
         print(data.dict()) 
         input_df = preprocess(data)
@@ -129,4 +144,6 @@ def predict(data: EmployeeInput, db: Session = Depends(get_db)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+
 
