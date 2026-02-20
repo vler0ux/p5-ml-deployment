@@ -15,9 +15,13 @@ import os
 from dotenv import load_dotenv
 
 # Chargement du modèle et des features
-model = joblib.load("models/model.joblib")
-feature_names = joblib.load("models/feature_names.joblib")
-
+try:
+    model = joblib.load("models/model.joblib")
+    feature_names = joblib.load("models/feature_names.joblib")
+except FileNotFoundError:
+    model = None
+    feature_names = []
+    
 app = FastAPI(
     title="API Attrition RH",
     description="Prédit si un employé va quitter l'entreprise",
@@ -116,6 +120,9 @@ def health():
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Security(verify_api_key)):
+    if model is None:
+        raise HTTPException(status_code=503, detail="Modèle non disponible")
+    
     try:
         print(data.dict()) 
         input_df = preprocess(data)
