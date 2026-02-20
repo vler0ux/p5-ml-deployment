@@ -21,6 +21,15 @@ VALID_INPUT = {
     "frequence_deplacement": "Frequent"
 }
 
+from unittest.mock import MagicMock, patch
+
+@pytest.fixture(autouse=True)
+def mock_db():
+    with patch("api.main.get_db") as mock:
+        db = MagicMock()
+        mock.return_value = iter([db])
+        yield db
+
 # ── Tests endpoint GET ──────────────────────────────────────────
 
 def test_root():
