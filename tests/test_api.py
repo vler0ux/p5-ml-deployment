@@ -3,10 +3,14 @@ from fastapi.testclient import TestClient
 import sys
 sys.path.append(".")
 from api.main import app
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 client = TestClient(app)
 
-API_KEY = "ma_cle_secrete_futurisys"
+API_KEY = os.getenv("API_KEY", "ma_cle_secrete_futurisys")
 HEADERS = {"X-API-Key": API_KEY}
 
 VALID_INPUT = {

@@ -5,6 +5,17 @@ import sys
 sys.path.append(".")
 from api.main import preprocess, EmployeeInput
 
+import os
+import pytest
+from dotenv import load_dotenv
+
+load_dotenv()
+
+pytestmark = pytest.mark.skipif(
+    not os.path.exists("models/model.joblib"),
+    reason="Modèle non disponible en CI"
+)
+
 VALID_INPUT = EmployeeInput(
     age=35,
     revenu_mensuel=5000.0,
