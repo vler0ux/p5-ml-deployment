@@ -1,5 +1,3 @@
-# p5-ml-deployment
-cat > ~/Documents/OpenClassRoom/p5/README.md << 'EOF'
 ---
 title: P5 ML Deployment
 emoji: 🤖
