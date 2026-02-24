@@ -12,6 +12,14 @@ pinned: false
 
 API de prédiction d'attrition des employés développée avec FastAPI.
 
+## 🌐 Déploiement en ligne
+
+L'API est déployée sur Hugging Face Spaces :  
+**URL** : https://vler0ux-p5-ml-deployment.hf.space
+
+- Documentation Swagger : https://vler0ux-p5-ml-deployment.hf.space/docs
+- Sur le plan gratuit, le Space s'endort après 48h d'inactivité et se réveille automatiquement au premier accès (30-60 secondes).
+
 
 # API Attrition RH — Projet P5
 
