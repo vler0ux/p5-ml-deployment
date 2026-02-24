@@ -3,10 +3,14 @@ from fastapi.testclient import TestClient
 import sys
 sys.path.append(".")
 from api.main import app
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 client = TestClient(app)
 
-API_KEY = "ma_cle_secrete_futurisys"
+API_KEY = os.getenv("API_KEY", "ma_cle_secrete_futurisys")
 HEADERS = {"X-API-Key": API_KEY}
 
 VALID_INPUT = {
@@ -16,6 +20,15 @@ VALID_INPUT = {
     "satisfaction_employee_environnement": 2,
     "frequence_deplacement": "Frequent"
 }
+
+from unittest.mock import MagicMock, patch
+
+@pytest.fixture(autouse=True)
+def mock_db():
+    with patch("api.main.get_db") as mock:
+        db = MagicMock()
+        mock.return_value = iter([db])
+        yield db
 
 # ── Tests endpoint GET ──────────────────────────────────────────
 
