@@ -1,3 +1,4 @@
+<<<<<<< feature/cicd-pipeline
 # API Attrition RH — Projet P5
 
 Déploiement d'un modèle de machine learning pour prédire le risque de départ des employés.
@@ -5,12 +6,40 @@ Déploiement d'un modèle de machine learning pour prédire le risque de départ
 ## 📋 Description
 
 Ce projet expose un modèle de **Régression Logistique** entraîné sur des données RH via une API REST FastAPI. Chaque prédiction est enregistrée dans une base de données PostgreSQL pour assurer une traçabilité complète.
+=======
+---
+title: P5 ML Deployment
+emoji: 🤖
+colorFrom: blue
+colorTo: green
+sdk: docker
+pinned: false
+---
+
+# P5 - Déploiement ML - Attrition RH
+
+API de prédiction d'attrition des employés développée avec FastAPI.
+EOF
+
+# API Attrition RH — Projet P5
+
+Déploiement d'un modèle de Machine Learning pour prédire le risque de départ des employés chez Futurisys.
+
+##  Description
+
+Ce projet expose un modèle de **Régression Logistique** via une API REST FastAPI. Chaque prédiction est enregistrée dans une base PostgreSQL pour assurer une traçabilité complète des interactions.
+
+**Modèle** : Logistic Regression (scikit-learn) avec StandardScaler  
+**Objectif** : Prédire si un employé va quitter l'entreprise (classification binaire)  
+**Dataset** : 1470 employés, 37 features
+>>>>>>> develop
 
 ## Architecture
 
 ```
 p5/
 ├── api/
+<<<<<<< feature/cicd-pipeline
 │   └── main.py          # API FastAPI
 ├── database/
 │   ├── create_db.py     # Création des tables
@@ -54,6 +83,61 @@ uv run python database/insert_data.py
 
 # Générer le modèle (exécuter le notebook)
 cd notebooks && uv run jupyter lab
+=======
+│   └── main.py              # API FastAPI
+├── database/
+│   ├── create_db.py         # Création des tables
+│   ├── insert_data.py       # Insertion du dataset
+│   └── db.py                # Connexion SQLAlchemy
+├── models/                  # Fichiers .joblib (non versionnés)
+├── notebooks/               # Notebook d'entraînement
+├── tests/                   # Tests unitaires pytest
+├── .env.example             # Template des variables d'environnement
+└── .github/workflows/       # CI/CD GitHub Actions
+```
+
+##  Installation
+
+### Prérequis
+- Python 3.11+
+- PostgreSQL 16+
+- uv (gestionnaire de paquets)
+
+
+### Étapes
+```bash
+# 1. Cloner le repo
+git clone https://github.com/TON_USERNAME/p5-ml-deployment.git
+cd p5-ml-deployment
+
+# 2. Installer les dépendances
+uv install
+
+# 3. Configurer les variables d'environnement
+cp .env.example .env
+# Éditer .env avec vos valeurs
+
+# 4. Configurer PostgreSQL
+sudo -u postgres psql
+```
+```sql
+CREATE DATABASE attrition_db;
+CREATE USER attrition_user WITH PASSWORD 'votre_mot_de_passe';
+GRANT ALL PRIVILEGES ON DATABASE attrition_db TO attrition_user;
+GRANT ALL ON SCHEMA public TO attrition_user;
+\q
+```
+
+```bash
+# 5. Créer les tables
+uv run python database/create_db.py
+
+# 6. Insérer le dataset
+uv run python database/insert_data.py
+
+# 7. Générer le modèle (exécuter le notebook)
+uv run jupyter lab notebooks/02_modelisation.ipynb
+>>>>>>> develop
 ```
 
 ## Lancement
@@ -62,6 +146,7 @@ cd notebooks && uv run jupyter lab
 uv run uvicorn api.main:app --reload
 ```
 
+<<<<<<< feature/cicd-pipeline
 L'API est disponible sur `http://localhost:8000`
 La documentation Swagger sur `http://localhost:8000/docs`
 
@@ -72,12 +157,46 @@ La documentation Swagger sur `http://localhost:8000/docs`
 | GET | `/` | Message de bienvenue |
 | GET | `/health` | Statut de l'API |
 | POST | `/predict` | Prédiction de départ |
+=======
+- API : `http://localhost:8000`
+- Documentation Swagger : `http://localhost:8000/docs`
+
+## 📡Endpoints
+
+| Méthode | Endpoint | Auth | Description |
+|---------|----------|------|-------------|
+| GET | `/` | ❌ | Message de bienvenue |
+| GET | `/health` | ❌ | Statut de l'API |
+| POST | `/predict` | ✅ | Prédiction de départ |
+
+##  Authentification
+
+L'endpoint `/predict` est protégé par une **API Key**.
+
+Ajoute le header suivant à chaque requête :
+```
+X-API-Key: votre_cle_api
+```
+
+Dans Swagger, clique sur le cadenas 🔒 en haut à droite et entre ta clé.
+
+## Sécurité
+
+- Les secrets (API Key, mot de passe BDD) sont stockés dans `.env` (jamais versionné)
+- `.env.example` documente les variables nécessaires sans exposer les valeurs
+- Les fichiers `.joblib` ne sont pas versionnés (trop lourds et régénérables)
+- L'accès à la BDD est limité à un utilisateur dédié avec droits restreints
+>>>>>>> develop
 
 ## Exemple d'utilisation
 
 ```bash
 curl -X POST "http://localhost:8000/predict" \
   -H "Content-Type: application/json" \
+<<<<<<< feature/cicd-pipeline
+=======
+  -H "X-API-Key: votre_cle_api" \
+>>>>>>> develop
   -d '{
     "age": 28,
     "revenu_mensuel": 3000,
@@ -88,7 +207,10 @@ curl -X POST "http://localhost:8000/predict" \
 ```
 
 Réponse :
+<<<<<<< feature/cicd-pipeline
 
+=======
+>>>>>>> develop
 ```json
 {
   "prediction": 1,
@@ -97,6 +219,7 @@ Réponse :
 }
 ```
 
+<<<<<<< feature/cicd-pipeline
 ## Base de données
 
 - **employes** : dataset complet (1470 lignes)
@@ -171,6 +294,40 @@ pwd_context.verify("mot_de_passe", hashed)
 API_KEY=votre_cle_api_ici
 DATABASE_URL=postgresql://user:password@localhost/attrition_db
 ```
+=======
+##  Base de données
+
+### Structure des tables
+
+**Table `employes`** : dataset complet (1470 lignes)
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INTEGER | Clé primaire |
+| age | INTEGER | Âge de l'employé |
+| revenu_mensuel | FLOAT | Salaire mensuel |
+| departement | VARCHAR | Département |
+| a_quitte_l_entreprise | VARCHAR | Valeur réelle (Oui/Non) |
+
+**Table `predictions`** : historique des prédictions
+| Colonne | Type | Description |
+|---------|------|-------------|
+| id | INTEGER | Clé primaire |
+| date_prediction | DATETIME | Horodatage |
+| age | INTEGER | Âge soumis |
+| prediction | INTEGER | 0=stable, 1=départ |
+| probabilite_depart | FLOAT | Score de probabilité |
+
+### Processus de stockage
+Chaque appel à `/predict` enregistre automatiquement les inputs et outputs dans la table `predictions` via SQLAlchemy, assurant une traçabilité complète.
+
+## Tests
+
+```bash
+uv run pytest tests/ -v --cov=api --cov-report=html
+```
+
+Le rapport de couverture est généré dans `htmlcov/`.
+>>>>>>> develop
 
 ## CI/CD
 
