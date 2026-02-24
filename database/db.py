@@ -3,7 +3,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
 import os
 
-DATABASE_URL = "postgresql://attrition_user:attrition_pass@localhost/attrition_db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 Base = declarative_base()
 
