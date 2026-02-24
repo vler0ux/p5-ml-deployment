@@ -117,30 +117,32 @@ def health():
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Security(verify_api_key)):
     try:
-        print(data.dict()) 
+        print(data.dict())
         input_df = preprocess(data)
         prediction = model.predict(input_df)[0]
         proba = model.predict_proba(input_df)[0][1]
+        label = "Risque de départ" if prediction == 1 else "Employé stable"
 
         # Enregistrer en BDD
-        log = Prediction(
-            age=data.age,
-            revenu_mensuel=data.revenu_mensuel,
-            departement=data.departement,
-            poste=data.poste,
-            heure_supplementaires=data.heure_supplementaires,
-            frequence_deplacement=data.frequence_deplacement,
-            prediction=int(prediction),
-            label="Risque de départ" if prediction == 1 else "Employé stable",
-            probabilite_depart=round(float(proba), 4)
-        )
-        db.add(log)
-        db.commit()
+        if db is not None:
+            log = Prediction(
+                age=data.age,
+                revenu_mensuel=data.revenu_mensuel,
+                departement=data.departement,
+                poste=data.poste,
+                heure_supplementaires=data.heure_supplementaires,
+                frequence_deplacement=data.frequence_deplacement,
+                prediction=int(prediction),
+                label="Risque de départ" if prediction == 1 else "Employé stable",
+                probabilite_depart=round(float(proba), 4)
+            )
+            db.add(log)
+            db.commit()
 
         return {
             "prediction": int(prediction),
-            "label": log.label,
-            "probabilite_depart": log.probabilite_depart
+            "label": label,
+            "probabilite_depart": round(float(proba), 4)
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

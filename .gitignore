@@ -1,0 +1,27 @@
+# Environnement virtuel
+.venv/
+venv/
+
+# Modèles
+models/*.joblib
+models/*.pkl
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Tests
+htmlcov/
+.coverage
+
+# Variables d'environnement
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/.ipynb_checkpoints/
+
+# OS
+.DS_Store
