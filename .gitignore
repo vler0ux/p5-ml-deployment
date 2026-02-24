@@ -1,9 +1,8 @@
-cat > .gitignore << 'EOF'
 # Environnement virtuel
 .venv/
 venv/
 
-# Modèles (fichiers lourds)
+# Modèles
 models/*.joblib
 models/*.pkl
 
@@ -26,4 +25,3 @@ notebooks/.ipynb_checkpoints/
 
 # OS
 .DS_Store
-EOF

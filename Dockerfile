@@ -5,6 +5,7 @@ WORKDIR /app
 COPY requirements.txt .
 COPY api/ ./api/
 COPY models/ ./models/
+COPY database/ ./database/
 
 RUN pip install -r requirements.txt
 
