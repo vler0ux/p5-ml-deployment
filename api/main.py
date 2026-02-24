@@ -15,9 +15,13 @@ import os
 from dotenv import load_dotenv
 
 # Chargement du modèle et des features
-model = joblib.load("models/model.joblib")
-feature_names = joblib.load("models/feature_names.joblib")
-
+try:
+    model = joblib.load("models/model.joblib")
+    feature_names = joblib.load("models/feature_names.joblib")
+except FileNotFoundError:
+    model = None
+    feature_names = []
+    
 app = FastAPI(
     title="API Attrition RH",
     description="Prédit si un employé va quitter l'entreprise",
@@ -116,33 +120,34 @@ def health():
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Security(verify_api_key)):
+    if model is None:
+        raise HTTPException(status_code=503, detail="Modèle non disponible")
+    
     try:
-        print(data.dict())
+        print(data.dict()) 
         input_df = preprocess(data)
         prediction = model.predict(input_df)[0]
         proba = model.predict_proba(input_df)[0][1]
-        label = "Risque de départ" if prediction == 1 else "Employé stable"
 
         # Enregistrer en BDD
-        if db is not None:
-            log = Prediction(
-                age=data.age,
-                revenu_mensuel=data.revenu_mensuel,
-                departement=data.departement,
-                poste=data.poste,
-                heure_supplementaires=data.heure_supplementaires,
-                frequence_deplacement=data.frequence_deplacement,
-                prediction=int(prediction),
-                label="Risque de départ" if prediction == 1 else "Employé stable",
-                probabilite_depart=round(float(proba), 4)
-            )
-            db.add(log)
-            db.commit()
+        log = Prediction(
+            age=data.age,
+            revenu_mensuel=data.revenu_mensuel,
+            departement=data.departement,
+            poste=data.poste,
+            heure_supplementaires=data.heure_supplementaires,
+            frequence_deplacement=data.frequence_deplacement,
+            prediction=int(prediction),
+            label="Risque de départ" if prediction == 1 else "Employé stable",
+            probabilite_depart=round(float(proba), 4)
+        )
+        db.add(log)
+        db.commit()
 
         return {
             "prediction": int(prediction),
-            "label": label,
-            "probabilite_depart": round(float(proba), 4)
+            "label": log.label,
+            "probabilite_depart": log.probabilite_depart
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
