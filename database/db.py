@@ -1,11 +1,10 @@
 from sqlalchemy import create_engine, Column, Integer, Float, String, DateTime
 from sqlalchemy.orm import declarative_base, sessionmaker
 from datetime import datetime
+import os
 
 DATABASE_URL = "postgresql://attrition_user:attrition_pass@localhost/attrition_db"
 
-engine = create_engine(DATABASE_URL)
-SessionLocal = sessionmaker(bind=engine)
 Base = declarative_base()
 
 class Prediction(Base):
@@ -23,7 +22,17 @@ class Prediction(Base):
     label = Column(String)
     probabilite_depart = Column(Float)
 
+if DATABASE_URL:
+    engine = create_engine(DATABASE_URL)
+    SessionLocal = sessionmaker(bind=engine)
+else:
+    engine = None
+    SessionLocal = None
+
 def get_db():
+    if SessionLocal is None:
+        yield None
+        return
     db = SessionLocal()
     try:
         yield db
