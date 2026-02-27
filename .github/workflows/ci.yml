@@ -39,17 +39,17 @@ jobs:
         with:
           name: coverage-report
           path: coverage.xml
-deploy:
-    needs: tests
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  deploy:
+      needs: tests
+      runs-on: ubuntu-latest
+      if: github.ref == 'refs/heads/main'
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v4
 
-      - name: Push to Hugging Face Spaces
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: |
-          git remote add hf https://vler0ux:$HF_TOKEN@huggingface.co/spaces/vler0ux/p5-ml-deployment
-          git push hf main --force
+        - name: Push to Hugging Face Spaces
+          env:
+            HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          run: |
+            git remote add hf https://vler0ux:$HF_TOKEN@huggingface.co/spaces/vler0ux/p5-ml-deployment
+            git push hf main --force
