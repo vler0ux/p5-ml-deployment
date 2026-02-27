@@ -52,4 +52,4 @@ jobs:
           git config --global user.name "GitHub Actions"
 
           git remote add hf https://vler0ux:${HF_TOKEN}@huggingface.co/spaces/vler0ux/p5-ml-deployment
-          git push hf main 
+          git push hf main --force
