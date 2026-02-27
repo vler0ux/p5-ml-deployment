@@ -15,7 +15,7 @@ pinned: false
     - [Prérequis](#prérequis)
     - [Étapes](#étapes)
   - [Lancement](#lancement)
-  - [📡Endpoints](#endpoints)
+  - [Endpoints](#endpoints)
   - [Authentification](#authentification)
   - [Sécurité](#sécurité)
   - [Exemple d'utilisation](#exemple-dutilisation)
@@ -24,10 +24,11 @@ pinned: false
     - [Processus de stockage](#processus-de-stockage)
   - [Tests](#tests)
 - [P5 - Déploiement ML - Attrition RH](#p5---déploiement-ml---attrition-rh)
-  - [🌐 Déploiement en ligne](#-déploiement-en-ligne)
+  - [Déploiement en ligne](#déploiement-en-ligne)
   - [CI/CD](#cicd)
   - [Gestion des versions](#gestion-des-versions)
   - [Mise à jour du modèle](#mise-à-jour-du-modèle)
+  - [Analyse et tableau de bord](#analyse-et-tableau-de-bord)
   - [Stack technique](#stack-technique)
 
 
@@ -117,7 +118,7 @@ uv run uvicorn api.main:app --reload
 - API : `http://localhost:8000`
 - Documentation Swagger : `http://localhost:8000/docs`
 
-## 📡Endpoints
+## Endpoints
 
 | Méthode | Endpoint | Auth | Description |
 |---------|----------|------|-------------|
@@ -125,7 +126,7 @@ uv run uvicorn api.main:app --reload
 | GET | `/health` | ❌ | Statut de l'API |
 | POST | `/predict` | ✅ | Prédiction de départ |
 
-##  Authentification
+## Authentification
 
 L'endpoint `/predict` est protégé par une **API Key**.
 
@@ -251,7 +252,7 @@ Le rapport de couverture est généré dans `htmlcov/`.
 
 API de prédiction d'attrition des employés développée avec FastAPI.
 
-## 🌐 Déploiement en ligne
+## Déploiement en ligne
 
 L'API est déployée sur Hugging Face Spaces :  
 **URL** : https://vler0ux-p5-ml-deployment.hf.space
@@ -285,6 +286,22 @@ Les versions de production sont taguées (`v1.0.0`).
 4. Vérifier que les tests passent
 5. Merger sur `main` → déploiement automatique
 
+## Analyse et tableau de bord
+
+Les données enregistrées dans la table `predictions` permettent d'alimenter
+des analyses RH :
+
+- **Taux de risque global** : pourcentage d'employés à risque de départ
+- **Analyse par département** : identifier les départements les plus exposés
+- **Évolution temporelle** : suivre les tendances via `date_prediction`
+- **Profils à risque** : croiser age, revenu_mensuel et probabilite_depart
+
+Ces données peuvent être exploitées via :
+- Des requêtes SQL directement sur la table `predictions`
+- Un outil de visualisation comme Power BI, Metabase ou Grafana
+- Le fichier `exemples_predictions.sql` fourni contient des requêtes
+  d'analyse prêtes à l'emploi
+  
 ## Stack technique
 
 | Outil | Usage |
