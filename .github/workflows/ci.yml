@@ -48,7 +48,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git config --global credential.helper store
-          echo "https://vler0ux:$HF_TOKEN@huggingface.co" > ~/.git-credentials
-          git remote add hf https://huggingface.co/spaces/vler0ux/p5-ml-deployment
-          git push hf main --force
+          git push https://vler0ux:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/vler0ux/p5-ml-deployment main --force
