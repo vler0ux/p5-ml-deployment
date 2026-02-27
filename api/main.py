@@ -151,6 +151,7 @@ def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Secur
             "probabilite_depart": log.probabilite_depart
         }
     except Exception as e:
+        print(f"ERREUR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
 
