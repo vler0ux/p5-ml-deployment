@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 import sys
 sys.path.append(".")
-from database.db import get_db, Prediction
+from database.db import get_db, Prediction  #connexion avec SQLAlchemy
 import joblib
 import pandas as pd
 
@@ -48,9 +48,9 @@ class EmployeeInput(BaseModel):
     frequence_deplacement: Literal["Aucun", "Occasionnel", "Frequent"] = Field(..., example="Occasionnel")
     genre: Literal["M", "F"] = Field("M", example="M")
     statut_marital: Literal["Célibataire", "Marié(e)", "Divorcé(e)"] = Field("Célibataire", example="Célibataire")
-    departement: Literal["Consulting", "Finance", "Recherche & Développement", "Ressources Humaines", "Ventes"] = Field("Finance", example="Finance")
-    poste: Literal["Cadre Commercial", "Consultant", "Directeur Technique", "Manager", "Représentant Commercial", "Ressources Humaines", "Senior Manager", "Tech Lead"] = Field("Consultant", example="Consultant")
-    domaine_etude: Literal["Entrepreunariat", "Infra & Cloud", "Marketing", "Ressources Humaines", "Sciences", "Transformation Digitale"] = Field("Sciences", example="Sciences")
+    departement: Literal["Commercial", "Consulting", "Ressources Humaines"] = Field("Consulting", example="Consulting")
+    poste: Literal["Assistant de Direction", "Cadre Commercial", "Consultant", "Directeur Technique", "Manager", "Représentant Commercial", "Ressources Humaines", "Senior Manager", "Tech Lead"] = Field("Consultant", example="Consultant")
+    domaine_etude: Literal["Autre", "Entrepreunariat", "Infra & Cloud", "Marketing", "Ressources Humaines", "Sciences", "Transformation Digitale"] = Field("Sciences", example="Sciences")
     nombre_experiences_precedentes: int = Field(2, example=2)
     annee_experience_totale: int = Field(10, example=10)
     annees_dans_l_entreprise: int = Field(5, example=5)
@@ -77,7 +77,7 @@ class PredictionOutput(BaseModel):
     probabilite_depart: float
     
 def preprocess(data: EmployeeInput) -> pd.DataFrame:
-    d = data.dict(exclude_unset=False) 
+    d = data.model_dump(exclude_unset=False) 
 
     # Encodage ordinal
     freq_map = {"Aucun": 0, "Occasionnel": 1, "Frequent": 2}
@@ -117,6 +117,68 @@ def root():
 def health():
     return {"status": "ok"}
 
+@app.get("/prediction/{prediction_id}")
+def get_prediction(prediction_id: int, db: Session = Depends(get_db), key: str = Security(verify_api_key)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Base de données non disponible")
+    pred = db.query(Prediction).filter(Prediction.id == prediction_id).first()
+    if pred is None:
+        raise HTTPException(status_code=404, detail="Prédiction non trouvée")
+    return pred
+
+@app.post("/predict/employe/{employe_id}")
+def predict_employe(employe_id: int, db: Session = Depends(get_db), key: str = Security(verify_api_key)):
+    if db is None:
+        raise HTTPException(status_code=503, detail="Base de données non disponible")
+    
+    # Récupérer l'employé
+    from database.create_db import Employe
+    employe = db.query(Employe).filter(Employe.id == employe_id).first()
+    if employe is None:
+        raise HTTPException(status_code=404, detail="Employé non trouvé")
+    
+    # Construire l'input à partir des données de l'employé
+    data = EmployeeInput(
+        age=employe.age,
+        revenu_mensuel=employe.revenu_mensuel,
+        heure_supplementaires=employe.heure_supplementaires,
+        satisfaction_employee_environnement=employe.satisfaction_employee_environnement,
+        frequence_deplacement=employe.frequence_deplacement,
+        genre=employe.genre,
+        statut_marital=employe.statut_marital,
+        departement=employe.departement,
+        poste=employe.poste,
+    )
+    
+    # Prédire
+    input_df = preprocess(data)
+    prediction = model.predict(input_df)[0]
+    proba = model.predict_proba(input_df)[0][1]
+    label = "Risque de départ" if prediction == 1 else "Employé stable"
+
+    # Enregistrer en BDD
+    log = Prediction(
+        age=employe.age,
+        revenu_mensuel=employe.revenu_mensuel,
+        departement=employe.departement,
+        poste=employe.poste,
+        heure_supplementaires=employe.heure_supplementaires,
+        frequence_deplacement=employe.frequence_deplacement,
+        prediction=int(prediction),
+        label=label,
+        probabilite_depart=round(float(proba), 4)
+    )
+    if db is not None:
+        db.add(log)
+        db.commit()
+
+    return {
+        "employe_id": employe_id,
+        "prediction": int(prediction),
+        "label": label,
+        "probabilite_depart": round(float(proba), 4)
+    }
+
 
 @app.post("/predict", response_model=PredictionOutput)
 def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Security(verify_api_key)):
@@ -124,7 +186,7 @@ def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Secur
         raise HTTPException(status_code=503, detail="Modèle non disponible")
     
     try:
-        print(data.dict()) 
+        print(data.model_dump()) 
         input_df = preprocess(data)
         prediction = model.predict(input_df)[0]
         proba = model.predict_proba(input_df)[0][1]
@@ -141,8 +203,9 @@ def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Secur
             label="Risque de départ" if prediction == 1 else "Employé stable",
             probabilite_depart=round(float(proba), 4)
         )
-        db.add(log)
-        db.commit()
+        if db is not None:
+            db.add(log)
+            db.commit()
 
         return {
             "prediction": int(prediction),
@@ -150,6 +213,7 @@ def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Secur
             "probabilite_depart": log.probabilite_depart
         }
     except Exception as e:
+        print(f"ERREUR: {e}")
         raise HTTPException(status_code=500, detail=str(e))
     
 

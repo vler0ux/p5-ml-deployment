@@ -25,6 +25,18 @@ class Employe(Base):
     satisfaction_employee_equilibre_pro_perso = Column(Integer)
     annees_dans_l_entreprise = Column(Integer)
     a_quitte_l_entreprise = Column(String)  # valeur réelle du dataset
+    nombre_experiences_precedentes = Column(Integer)
+    annee_experience_totale = Column(Integer)
+    annees_dans_le_poste_actuel = Column(Integer)
+    note_evaluation_precedente = Column(Float)
+    note_evaluation_actuelle = Column(Float)
+    augmentation_salaire_precedente = Column(Float)
+    nombre_participation_pee = Column(Integer)
+    nb_formations_suivies = Column(Integer)
+    distance_domicile_travail = Column(Float)
+    niveau_education = Column(Integer)
+    domaine_etude = Column(String)
+    annees_depuis_la_derniere_promotion = Column(Integer)
 
 class Prediction(Base):
     __tablename__ = "predictions"
