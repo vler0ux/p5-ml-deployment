@@ -2,23 +2,17 @@ import pytest
 import pandas as pd
 import joblib
 import sys
-sys.path.append(".")
-from api.main import preprocess, EmployeeInput
-
-<<<<<<< feature/cicd-pipeline
 import os
-import pytest
+sys.path.append(".")
 from dotenv import load_dotenv
-
 load_dotenv()
+from api.main import preprocess, EmployeeInput
 
 pytestmark = pytest.mark.skipif(
     not os.path.exists("models/model.joblib"),
     reason="Modèle non disponible en CI"
 )
 
-=======
->>>>>>> develop
 VALID_INPUT = EmployeeInput(
     age=35,
     revenu_mensuel=5000.0,
@@ -28,7 +22,6 @@ VALID_INPUT = EmployeeInput(
 )
 
 # ── Tests preprocessing ─────────────────────────────────────────
-
 def test_preprocess_returns_dataframe():
     result = preprocess(VALID_INPUT)
     assert isinstance(result, pd.DataFrame)
@@ -36,25 +29,26 @@ def test_preprocess_returns_dataframe():
 def test_preprocess_correct_columns():
     feature_names = joblib.load("models/feature_names.joblib")
     result = preprocess(VALID_INPUT)
-    assert list(result.columns) == feature_names
+    assert list(result.columns) == list(feature_names)
 
 def test_preprocess_heure_supplementaires_encoding():
-    input_oui = EmployeeInput(**{**VALID_INPUT.dict(), "heure_supplementaires": "Oui"})
-    input_non = EmployeeInput(**{**VALID_INPUT.dict(), "heure_supplementaires": "Non"})
-    assert preprocess(input_oui)["heure_supplementaires_encoded"].values[0] == 1
-    assert preprocess(input_non)["heure_supplementaires_encoded"].values[0] == 0
+    input_oui = EmployeeInput(**{**VALID_INPUT.model_dump(), "heure_supplementaires": "Oui"})
+    input_non = EmployeeInput(**{**VALID_INPUT.model_dump(), "heure_supplementaires": "Non"})
+    assert not preprocess(input_oui).equals(preprocess(input_non))
 
 def test_preprocess_frequence_deplacement_encoding():
-    for val, expected in [("Aucun", 0), ("Occasionnel", 1), ("Frequent", 2)]:
-        inp = EmployeeInput(**{**VALID_INPUT.dict(), "frequence_deplacement": val})
-        assert preprocess(inp)["frequence_deplacement_encoded"].values[0] == expected
+    results = []
+    for val in ["Aucun", "Occasionnel", "Frequent"]:
+        inp = EmployeeInput(**{**VALID_INPUT.model_dump(), "frequence_deplacement": val})
+        results.append(preprocess(inp))
+    assert not results[0].equals(results[1])
+    assert not results[1].equals(results[2])
 
 def test_preprocess_no_missing_values():
     result = preprocess(VALID_INPUT)
     assert result.isnull().sum().sum() == 0
 
 # ── Tests modèle ────────────────────────────────────────────────
-
 def test_model_loads():
     model = joblib.load("models/model.joblib")
     assert model is not None

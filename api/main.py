@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 import sys
 sys.path.append(".")
-from database.db import get_db, Prediction
+from database.db import get_db, Prediction  #connexion avec SQLAlchemy
 import joblib
 import pandas as pd
 
@@ -77,7 +77,7 @@ class PredictionOutput(BaseModel):
     probabilite_depart: float
     
 def preprocess(data: EmployeeInput) -> pd.DataFrame:
-    d = data.dict(exclude_unset=False) 
+    d = data.model_dump(exclude_unset=False) 
 
     # Encodage ordinal
     freq_map = {"Aucun": 0, "Occasionnel": 1, "Frequent": 2}
@@ -124,7 +124,7 @@ def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Secur
         raise HTTPException(status_code=503, detail="Modèle non disponible")
     
     try:
-        print(data.dict()) 
+        print(data.model_dump()) 
         input_df = preprocess(data)
         prediction = model.predict(input_df)[0]
         proba = model.predict_proba(input_df)[0][1]

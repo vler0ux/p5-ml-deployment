@@ -25,3 +25,10 @@ dependencies = [
 ]
 [tool.pytest.ini_options]
 pythonpath = ["."]
+[tool.coverage.run]
+omit = [
+    "database/create_db.py",
+    "database/insert_data.py",
+    "api/__init__.py",
+    "database/__init__.py"
+]
