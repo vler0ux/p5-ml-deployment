@@ -141,8 +141,9 @@ def predict(data: EmployeeInput, db: Session = Depends(get_db), key: str = Secur
             label="Risque de départ" if prediction == 1 else "Employé stable",
             probabilite_depart=round(float(proba), 4)
         )
-        db.add(log)
-        db.commit()
+        if db is not None:
+            db.add(log)
+            db.commit()
 
         return {
             "prediction": int(prediction),
