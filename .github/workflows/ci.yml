@@ -48,4 +48,14 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          git push https://vler0ux:${{ secrets.HF_TOKEN }}@huggingface.co/spaces/vler0ux/p5-ml-deployment main --force
+          pip install huggingface_hub
+          python -c "
+          from huggingface_hub import HfApi
+          api = HfApi(token='${{ secrets.HF_TOKEN }}')
+          api.upload_folder(
+              folder_path='.',
+              repo_id='vler0ux/p5-ml-deployment',
+              repo_type='space',
+              ignore_patterns=['*.pyc', '__pycache__', '.git', '.venv', 'htmlcov']
+          )
+          "
