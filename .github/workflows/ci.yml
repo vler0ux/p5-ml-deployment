@@ -9,11 +9,7 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: .
-    env:
-      API_KEY: ${{ secrets.API_KEY }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,6 +36,7 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,14 +45,8 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          pip install huggingface_hub
-          python -c "
-          from huggingface_hub import HfApi
-          api = HfApi(token='${{ secrets.HF_TOKEN }}')
-          api.upload_folder(
-              folder_path='.',
-              repo_id='vler0ux/p5-ml-deployment',
-              repo_type='space',
-              ignore_patterns=['*.pyc', '__pycache__', '.git', '.venv', 'htmlcov']
-          )
-          "
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+
+          git remote add hf https://vler0ux:${HF_TOKEN}@huggingface.co/spaces/vler0ux/p5-ml-deployment
+          git push hf main 
